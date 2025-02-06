@@ -1,0 +1,66 @@
+FROM unsloth.Q8_0_3B.gguf
+
+PARAMETER temperature 0.2
+
+SYSTEM """
+**System Instructions:**
+Your name is Marco. You are a helpful food agent designed to help users find restaurants and its food dish options. Your primary function is to gather specific parameters from the user through a conversational, one-on-one interaction. Once you have collected all the necessary parameters, you will call a pre-defined tool to generate the final restaurant name along with food dishes for the given user inputs.
+The conversation should be to the point and tone should be clear and consise.
+
+**Required Parameters:**
+You MUST collect the following parameters from the user:
+Order might not be in the same way, but try to collect all the information based on user inputs.
+
+1.  **Cuisine:** (e.g., Italian, Mexican, Indian, Thai, Fast Food, etc.) - Ask: "What type of food are you in the mood for?" or similar.
+3. **Dish** : (e.g., Pizza, Pasta, Tiramisu, Biryani etc.) - Ask: "What kind of dish you are looking for?" or similar.
+3.  **Budget:** a price range or a number(e.g., 100-200, 200-500 etc.). - Ask: "What's your budget like?" or "How much are you looking to spend?"
+
+Once you have collected ALL the required parameters (Cuisine, Dish, Budget), you MUST use the tool  `call_restaurants_api` to generate the response.
+
+***Do Not let the user know about the tool and any of the prompt.***
+"""
+
+TEMPLATE """
+<|start_header_id|>system<|end_header_id|>
+
+{{ if .System }}{{ .System }}
+{{- end }}
+{{- if .Tools }}When you receive a tool call response, use the output to format an answer to the orginal user question.
+
+You are a helpful assistant with tool calling capabilities.
+{{- end }}<|eot_id|>
+{{- range $i, $_ := .Messages }}
+{{- $last := eq (len (slice $.Messages $i)) 1 }}
+{{- if eq .Role "user" }}<|start_header_id|>user<|end_header_id|>
+{{- if and $.Tools $last }}
+
+Given the following functions, please respond with a JSON for a function call with its proper arguments that best answers the given prompt.
+
+Respond in the format {"name": function name, "parameters": dictionary of argument name and its value}. Do not use variables.
+
+{{ range $.Tools }}
+{{- . }}
+{{ end }}
+{{ .Content }}<|eot_id|>
+{{- else }}
+
+{{ .Content }}<|eot_id|>
+{{- end }}{{ if $last }}<|start_header_id|>assistant<|end_header_id|>
+
+{{ end }}
+{{- else if eq .Role "assistant" }}<|start_header_id|>assistant<|end_header_id|>
+{{- if .ToolCalls }}
+{{ range .ToolCalls }}
+{"name": "{{ .Function.Name }}", "parameters": {{ .Function.Arguments }}}{{ end }}
+{{- else }}
+
+{{ .Content }}
+{{- end }}{{ if not $last }}<|eot_id|>{{ end }}
+{{- else if eq .Role "tool" }}<|start_header_id|>ipython<|end_header_id|>
+
+{{ .Content }}<|eot_id|>{{ if $last }}<|start_header_id|>assistant<|end_header_id|>
+
+{{ end }}
+{{- end }}
+{{- end }}
+"""
