@@ -1,2 +1,4 @@
 HF_TOKEN = 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
-HUGGING_FACE_PATH_3B_parameters = https://huggingface.co/varun2480/Marco-Llama-3.2-3B-bnb-16bit-python/tree/main
+HUGGING_FACE_PATH_3B_parameters_16bit_merged = https://huggingface.co/varun2480/Marco-Llama-3.2-3B-bnb-16bit-python/tree/main
+HUGGING_FACE_PATH_3B_parameters = https://huggingface.co/varun2480/Marco-Llama-3.1-3B
+HUGGING_FACE_PATH_1B_parameters = https://huggingface.co/varun2480/Marco-Llama-3.1-1B
